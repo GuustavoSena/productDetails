@@ -12,7 +12,6 @@ const userAgents = [
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/601.7.7 (KHTML, like Gecko) Version/9.1.2 Safari/601.7.7",
   "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.140 Safari/537.36 Edge/17.17134",
   "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:47.0) Gecko/20100101 Firefox/47.0",
-  "Mozilla/5.0 (iPhone; CPU iPhone OS 10_3 like Mac OS X) AppleWebKit/602.1.50 (KHTML, like Gecko) CriOS/56.0.2924.75 Mobile/14E5239e Safari/602.1",
 ];
 
 async function findTagBySelector(
@@ -30,6 +29,9 @@ async function findTagBySelector(
     selector = `.${selectorValue}`;
   } else if (selectorType === "attr" && attributeName) {
     selector = `[${attributeName}="${selectorValue}"]`;
+  } else if (selectorType === "tag-text") {
+    const [tag, text] = selectorValue.split("|");
+    selector = `${tag}:contains("${text}")`;
   } else if (selectorType === "xpath") {
     try {
       elementHandles = await page.$x(selectorValue);
@@ -62,7 +64,7 @@ async function fetchProductDetails(url, selectors) {
   try {
     browser = await puppeteer.launch({
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
-      headless: "new",
+      headless: true, // Adjust this as needed
     });
 
     const page = await browser.newPage();
@@ -90,26 +92,11 @@ async function fetchProductDetails(url, selectors) {
 
     for (const selector of selectors) {
       const { name, type, value, attributeName } = selector;
-      if (type === "attr") {
-        const element = await page.$(`[${attributeName}="${value}"]`);
-        if (element) {
-          results[name] = await page.evaluate(
-            (el) => el.textContent.trim(),
-            element
-          );
-        } else {
-          results[name] = "Not found";
-        }
+      const tag = await findTagBySelector(page, type, value, attributeName);
+      if (tag) {
+        results[name] = await page.evaluate((el) => el.textContent.trim(), tag);
       } else {
-        const tag = await findTagBySelector(page, type, value, attributeName);
-        if (tag) {
-          results[name] = await page.evaluate(
-            (el) => el.textContent.trim(),
-            tag
-          );
-        } else {
-          results[name] = "Not found";
-        }
+        results[name] = "Not found";
       }
     }
 
