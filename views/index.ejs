@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="/css/styles.css">
+    <title>Product Details Extractor API</title>
+  </head>
+  <body>
+    <h1>Product Details Extractor API</h1>
+    <p>
+      To extract product details from a webpage, make a POST request to the
+      following URL:
+    </p>
+    <code>/fetch-product-details</code>
+    <p>
+      Include a request body with the URL from which you want to extract product
+      details and the selectors you want to use. Here are some examples:
+    </p>
+    <code>
+      { "url": "https://www.example.com/product", "selectors": [ { "name":
+      "productName", "type": "class", "value": "product-name" }, { "name":
+      "productPrice", "type": "class", "value": "product-price" } ] }
+    </code>
+    <p>
+      For attribute-based selectors, suppose that you have this element:
+      <code
+        >&lt;div class="product-price css-11s12ax is--current-price css-tpaepq"
+        data-test="product-price"&gt;$90&lt;/div&gt;</code
+      >
+      You could select it as:
+    </p>
+    <code>
+      { "url": "https://www.example.com/product", "selectors": [ { "name":
+      "productLink", "type": "attr", "value": "a.product-link", "attributeName":
+      "href" } ] }
+    </code>
+    <p>
+      For tag-text based selectors, suppose that you have this element:
+      <code
+        >&lt;p&gt;Hypoallergenic Dry Skin Relief For dry, chapped or irritated
+        skin Seals out wetness &amp; helps restore smooth, healthy skin
+        Pediatrician &amp; dermatologist tested Fragrance free&lt;/p&gt;</code
+      >
+      You could select it as:
+    </p>
+    <code>
+      { "url": "https://www.example.com/product", "selectors": [ { "name":
+      "productDescription", "type": "tag-text", "value": "p|Hypoallergenic" } ]
+      }
+    </code>
+    <p>
+      For XPath-based selectors, suppose that you have this element:
+      <code
+        >&lt;div class="product-details"&gt;Special Product - Limited
+        Edition&lt;/div&gt;</code
+      >
+      You could select it using an XPath that targets the text content:
+    </p>
+    <code>
+      { "url": "https://www.example.com/product", "selectors": [ { "name":
+      "specialProduct", "type": "xpath", "value": "//div[contains(text(),
+      'Special Product - Limited Edition')]" } ] }
+    </code>
+    <p>
+      But for XPath, you can use a lot of selectors. This options will be used
+      only if the scraping logic is really hard and then the only recommended
+      way is to use XPath
+    </p>
+  </body>
+</html>
