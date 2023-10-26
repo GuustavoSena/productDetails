@@ -1,8 +1,6 @@
 const puppeteer = require("puppeteer-extra");
 const StealthPlugin = require("puppeteer-extra-plugin-stealth");
-const readline = require("readline");
 puppeteer.use(StealthPlugin());
-const { exec } = require("child_process");
 
 const userAgents = [
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.140 Safari/537.36 Edge/17.17134",
@@ -42,7 +40,7 @@ async function findTagBySelector(
       );
       return null;
     }
-  } 
+  }
 
   try {
     if (!elementHandles) {
@@ -70,7 +68,6 @@ async function fetchProductDetails(url, selectors) {
     const page = await browser.newPage();
     await page.setUserAgent(getRandomUserAgent());
 
-    // Handling requests
     await page.setRequestInterception(true);
     page.on("request", (req) => {
       if (
@@ -93,21 +90,26 @@ async function fetchProductDetails(url, selectors) {
 
     for (const selector of selectors) {
       const { name, type, value, attributeName } = selector;
-      const tag = await findTagBySelector(page, type, value, attributeName);
-      if (tag) {
-        if (Array.isArray(tag)) {
-          const texts = await Promise.all(
-            tag.map((el) => page.evaluate((el) => el.textContent.trim(), el))
+      if (type === "attr") {
+        const element = await page.$(`[${attributeName}="${value}"]`);
+        if (element) {
+          results[name] = await page.evaluate(
+            (el) => el.textContent.trim(),
+            element
           );
-          results[name] = texts.join(" ");
         } else {
+          results[name] = "Not found";
+        }
+      } else {
+        const tag = await findTagBySelector(page, type, value, attributeName);
+        if (tag) {
           results[name] = await page.evaluate(
             (el) => el.textContent.trim(),
             tag
           );
+        } else {
+          results[name] = "Not found";
         }
-      } else {
-        results[name] = "Not found";
       }
     }
 
@@ -126,57 +128,6 @@ async function fetchProductDetails(url, selectors) {
   }
 }
 
-function question(prompt) {
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  });
-
-  return new Promise((resolve) => {
-    rl.question(prompt, (answer) => {
-      rl.close();
-      resolve(answer);
-    });
-  });
-}
-
-async function main() {
-  try {
-    const url = await question("Enter the URL: ");
-
-    let selectors = [];
-    let finished = false;
-
-    while (!finished) {
-      const selectionName = await question("What will you select now? : ");
-      const selectorType = await question(
-        "Put the selector you want to use (id/class/attr/tag-text/xpath): "
-      );
-      let selectorValue, attributeName;
-
-      if (selectorType === "attr") {
-        attributeName = await question("Enter the attribute name: ");
-        selectorValue = await question("Enter the selector value: ");
-      } else {
-        selectorValue = await question("Enter the selector value: ");
-      }
-
-      selectors.push({
-        name: selectionName,
-        type: selectorType,
-        value: selectorValue,
-        attributeName,
-      });
-
-      const finishInput = await question("Finish our scraping?(Y/N): ");
-      finished = finishInput.toLowerCase() === "y";
-    }
-
-    const result = await fetchProductDetails(url, selectors);
-    console.log(result);
-  } catch (error) {
-    console.error("An error occurred:", error.message);
-  }
-}
-
-main();
+module.exports = {
+  fetchProductDetails,
+};

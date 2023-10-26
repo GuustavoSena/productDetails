@@ -26,18 +26,17 @@ app.get("/", (req, res) => {
   `);
 });
 
-// Route to fetch product details
 app.post("/fetch-product-details", async (req, res) => {
-  const { url } = req.body;
-  
-  if (!url) {
-    return res.status(400).send({ error: "URL is required" });
+  const { url, selectors } = req.body;
+
+  if (!url || !selectors) {
+    return res.status(400).send({ error: "URL and selectors are required" });
   }
 
-  const result = await fetchProductDetails(url);
-  
+  const result = await fetchProductDetails(url, selectors);
+
   if (result.status === "success") {
-    res.json(result.details);
+    res.json(result.results);
   } else {
     res.status(500).send({ error: result.message });
   }
@@ -47,4 +46,3 @@ const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
-
