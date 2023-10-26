@@ -1,6 +1,7 @@
 const express = require("express");
 const path = require("path");
 const app = express();
+const { fetchProductDetails } = require("./productDetails");
 
 // Set up EJS as the view engine
 app.set("view engine", "ejs");
@@ -19,11 +20,16 @@ app.get("/", (req, res) => {
 app.post("/fetch-product-details", async (req, res) => {
   const { url, selectors } = req.body;
 
+  console.log("Received URL:", url);
+  console.log("Received selectors:", selectors);
+
   if (!url || !selectors) {
     return res.status(400).send({ error: "URL and selectors are required" });
   }
 
   const result = await fetchProductDetails(url, selectors);
+
+  console.log("Result from fetchProductDetails:", result);
 
   if (result.status === "success") {
     res.json(result.results);

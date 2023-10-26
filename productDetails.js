@@ -31,7 +31,33 @@ async function findTagBySelector(
     selector = `[${attributeName}="${selectorValue}"]`;
   } else if (selectorType === "tag-text") {
     const [tag, text] = selectorValue.split("|");
-    selector = `${tag}:contains("${text}")`;
+    try {
+      const elementHandle = await page.evaluateHandle(
+        (tag, text) => {
+          const elements = document.querySelectorAll(tag);
+          for (let element of elements) {
+            if (element.textContent.includes(text)) {
+              return element;
+            }
+          }
+          return null;
+        },
+        tag,
+        text
+      );
+
+      if (elementHandle && !((await elementHandle.jsonValue()) === null)) {
+        return elementHandle;
+      } else {
+        console.error(`No element found for tag-text selector: ${tag}|${text}`);
+        return null;
+      }
+    } catch (error) {
+      console.error(
+        `Error finding element with tag-text selector ${tag}|${text}: ${error.message}`
+      );
+      return null;
+    }
   } else if (selectorType === "xpath") {
     try {
       elementHandles = await page.$x(selectorValue);
@@ -61,11 +87,14 @@ function getRandomUserAgent() {
 
 async function fetchProductDetails(url, selectors) {
   let browser;
+  console.log("fetchProductDetails called with URL:", url);
   try {
+    console.log("Launching browser...");
     browser = await puppeteer.launch({
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
-      headless: true, // Adjust this as needed
+      headless: "new",
     });
+    console.log("Browser launched successfully.");
 
     const page = await browser.newPage();
     await page.setUserAgent(getRandomUserAgent());
@@ -83,7 +112,9 @@ async function fetchProductDetails(url, selectors) {
       }
     });
 
+    console.log("Navigating to URL:", url);
     await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
+    console.log("Navigation complete.");
 
     const delay = 3000 + Math.random() * 2000;
     await page.waitForTimeout(delay);
@@ -91,6 +122,7 @@ async function fetchProductDetails(url, selectors) {
     let results = {};
 
     for (const selector of selectors) {
+      console.log("Processing selector:", selector);
       const { name, type, value, attributeName } = selector;
       const tag = await findTagBySelector(page, type, value, attributeName);
       if (tag) {
@@ -99,6 +131,8 @@ async function fetchProductDetails(url, selectors) {
         results[name] = "Not found";
       }
     }
+
+    console.log("Final results:", results);
 
     await browser.close();
     return {
