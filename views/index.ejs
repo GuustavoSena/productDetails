@@ -55,25 +55,5 @@
       }
     </code>
     <hr>
-    <h2>XPath Selector</h2>
-    <p>
-      For XPath-based selectors, suppose that you have this element:
-      <code
-        >&lt;div class="product-details"&gt;Special Product - Limited
-        Edition&lt;/div&gt;</code
-      >
-      You could select it using an XPath that targets the text content:
-    </p>
-    <code>
-      { "url": "https://www.example.com/product", "selectors": [ { "name":
-      "specialProduct", "type": "xpath", "value": "//div[contains(text(),
-      'Special Product - Limited Edition')]" } ] }
-    </code>
-    <p>
-        <h3>Note:</h3>
-      For XPath, you can use a lot of selectors on "value". This options will be used
-      only if the scraping logic is really hard and then the only suitable
-      way is to use XPath.
-    </p>
   </body>
 </html>
